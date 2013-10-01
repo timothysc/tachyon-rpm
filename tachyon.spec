@@ -116,11 +116,9 @@ rm -r src/test/java/tachyon/client/TachyonFileTest.java \
 %install
 %mvn_install
 
-
-
 %files -f .mfiles
 %doc LICENSE README.md
-%{_bindir}/clear-cache.sh
+#%{_bindir}/clear-cache.sh
 
 %files javadoc -f .mfiles-javadoc
 %doc LICENSE
