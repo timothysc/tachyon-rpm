@@ -1,5 +1,5 @@
 Name:          tachyon
-Version:       0.2.1
+Version:       0.3.0
 Release:       1%{?dist}
 Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
 License:       BSD
@@ -8,15 +8,14 @@ Source0:       https://github.com/amplab/tachyon/archive/v%{version}.tar.gz
 
 BuildRequires: java-devel
 BuildRequires: mvn(commons-io:commons-io)
-# http://gil.fedorapeople.org/kryo-serializers-0.23-1.fc19.src.rpm
 BuildRequires: mvn(de.javakaffee:kryo-serializers)
 BuildRequires: mvn(log4j:log4j)
 BuildRequires: mvn(org.apache.ant:ant)
 BuildRequires: mvn(org.apache.commons:commons-lang3)
-#BuildRequires: mvn(org.apache.hadoop:hadoop-core)
+
 BuildRequires: mvn(org.apache.hadoop:hadoop-common)
 BuildRequires: mvn(org.apache.hadoop:hadoop-mapreduce-client-core)
-# https://bugzilla.redhat.com/show_bug.cgi?id=982285
+
 BuildRequires: mvn(org.apache.thrift:libthrift)
 BuildRequires: mvn(org.eclipse.jetty:jetty-webapp)
 BuildRequires: mvn(org.eclipse.jetty:jetty-server)
@@ -24,11 +23,9 @@ BuildRequires: mvn(org.eclipse.jetty:jetty-servlet)
 BuildRequires: mvn(org.glassfish.web:javax.servlet.jsp)
 BuildRequires: mvn(org.slf4j:slf4j-api)
 BuildRequires: mvn(org.slf4j:slf4j-log4j12)
+
 # Test deps
-BuildRequires: mvn(com.esotericsoftware.minlog:minlog)
-BuildRequires: mvn(com.esotericsoftware.reflectasm:reflectasm)
 BuildRequires: mvn(junit:junit)
-BuildRequires: mvn(org.objenesis:objenesis)
 
 BuildRequires: maven-local
 BuildRequires: exec-maven-plugin
@@ -60,8 +57,11 @@ This package contains javadoc for %{name}.
 find -name '*.class' -print -delete
 find -name '*.jar' -print -delete
 
+#%pom_xpath_remove "pom:repositories"
+
 # Use hadoop2 as default profile
 %pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop1' ]"
+%pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop3' ]"
 
 # Fix hadoop deps aid
 sed -i "s|<artifactId>hadoop-core|<artifactId>hadoop-common|" pom.xml
@@ -81,34 +81,9 @@ sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" p
 sed -i "s|org.mortbay.log.Log|org.eclipse.jetty.util.log.Log|" src/main/java/tachyon/MasterInfo.java
 sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.java
 
-# NoClassDefFoundError: org/objenesis/instantiator/ObjectInstantiator
-%pom_add_dep org.objenesis:objenesis::test
-# NoClassDefFound com/esotericsoftware/minlog/Log
-%pom_add_dep com.esotericsoftware.minlog:minlog::test
-# NoClassDefFoundError: com/esotericsoftware/reflectasm/FieldAccess
-%pom_add_dep com.esotericsoftware.reflectasm:reflectasm::test
+./bin/thrift-gen.sh
 
 %build
-
-# Failed tests: 
-#   Expected exception: tachyon.thrift.InvalidPathException
-#   Expected exception: tachyon.thrift.FileAlreadyExistException
-#   Expected exception: tachyon.thrift.TableColumnException
-#   Expected exception: tachyon.thrift.FileAlreadyExistException
-#   Expected exception: tachyon.thrift.InvalidPathException
-#   Expected exception: tachyon.thrift.FileAlreadyExistException
-#   Expected exception: tachyon.thrift.InvalidPathException
-#   Expected exception: tachyon.thrift.InvalidPathException
-rm -r src/test/java/tachyon/client/TachyonClientTest.java \
- src/test/java/tachyon/command/TFsShellTest.java
-
-# After removing previous testing sources
-# Running tachyon.client.RawColumnTest
-# Exception in thread "Thread-443" java.lang.NoClassDefFoundError:
-# Could not initialize class tachyon.thrift.MasterService$worker_heartbeat_args
-# file:///home/gil/rpmbuild/BUILD/tachyon-0.2.1/target/classes/tachyon/thrift/MasterService$worker_heartbeat_args.class
-rm -r src/test/java/tachyon/client/TachyonFileTest.java \
- src/test/java/tachyon/WorkerServiceHandlerTest.java
  
 %mvn_file org.tachyonproject:%{name} %{name}
 %mvn_build -- -Phadoop2 -X
@@ -125,5 +100,8 @@ rm -r src/test/java/tachyon/client/TachyonFileTest.java \
 
 
 %changelog
+* Thu Oct 10 2013 Timothy St. Clair <tstclair@redhat.com> 0.3.0-1
+- Update to the latest in preparation for release. 
+
 * Sun Sep 29 2013 gil cattaneo <puntogil@libero.it> 0.2.1-1
 - initial rpm
