@@ -4,7 +4,9 @@ Release:       1%{?dist}
 Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
 License:       BSD
 URL:           https://github.com/amplab/tachyon/wiki
-Source0:       https://github.com/amplab/tachyon/archive/v%{version}.tar.gz
+#Source0:       https://github.com/amplab/tachyon/archive/v%{version}.tar.gz
+Source0:       v0.3.0.tar.gz
+Source1:       generate-tarball.sh
 
 BuildRequires: java-devel
 BuildRequires: mvn(commons-io:commons-io)
@@ -57,8 +59,6 @@ This package contains javadoc for %{name}.
 find -name '*.class' -print -delete
 find -name '*.jar' -print -delete
 
-#%pom_xpath_remove "pom:repositories"
-
 # Use hadoop2 as default profile
 %pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop1' ]"
 %pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop3' ]"
@@ -81,6 +81,7 @@ sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" p
 sed -i "s|org.mortbay.log.Log|org.eclipse.jetty.util.log.Log|" src/main/java/tachyon/MasterInfo.java
 sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.java
 
+# This is required to update to the latest thrift.
 ./bin/thrift-gen.sh
 
 %build
