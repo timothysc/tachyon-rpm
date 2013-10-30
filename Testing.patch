@@ -1,0 +1,62 @@
+diff --git a/src/main/java/tachyon/Worker.java b/src/main/java/tachyon/Worker.java
+index af61284..ce69efd 100644
+--- a/src/main/java/tachyon/Worker.java
++++ b/src/main/java/tachyon/Worker.java
+@@ -24,6 +24,7 @@ public class Worker implements Runnable {
+ 
+   private final InetSocketAddress MasterAddress;
+   private final InetSocketAddress WorkerAddress;
++  private volatile boolean done = false;
+ 
+   private TServer mServer;
+ 
+@@ -75,7 +76,7 @@ public class Worker implements Runnable {
+   public void run() {
+     long lastHeartbeatMs = System.currentTimeMillis();
+     Command cmd = null;
+-    while (true) {
++    while (!done) {
+       long diff = System.currentTimeMillis() - lastHeartbeatMs;
+       if (diff < WorkerConf.get().TO_MASTER_HEARTBEAT_INTERVAL_MS) {
+         LOG.debug("Heartbeat process takes " + diff + " ms.");
+@@ -84,6 +85,8 @@ public class Worker implements Runnable {
+         LOG.error("Heartbeat process takes " + diff + " ms.");
+       }
+ 
++      if (done) return;
++
+       try {
+         cmd = mWorkerStorage.heartbeat();
+ 
+@@ -124,6 +127,8 @@ public class Worker implements Runnable {
+         }
+       }
+ 
++      if (done) return;
++      
+       mWorkerStorage.checkStatus();
+     }
+   }
+@@ -156,14 +161,19 @@ public class Worker implements Runnable {
+   }
+ 
+   @SuppressWarnings("deprecation")
+-  public void stop() throws IOException {
++  public void stop() throws Exception {
++
++    done = true;
++    mHeartbeatThread.interrupt();
++    
+     mDataServer.close();
+-    // TODO better stop for these two threads.
+-    mHeartbeatThread.stop();
++
+     mServer.stop();
+     while (!mDataServer.isClosed()) {
+       CommonUtils.sleepMs(null, 100);
+     }
++    
++    mHeartbeatThread.join(1000);
+   }
+ 
+   public static void main(String[] args) throws UnknownHostException {
