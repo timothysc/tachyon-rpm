@@ -1,4 +1,4 @@
-%global commit      e536d57d321718b525c14ab5b143a3318325523e
+%global commit      ace4347470c74caeb6977a9b5decf7fb61422a4e
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:          tachyon
@@ -8,11 +8,14 @@ Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
 License:       BSD
 URL:           https://github.com/amplab/tachyon/wiki
 Source0:       https://github.com/timothysc/tachyon/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
-Patch0:        Testing.patch
+Source1:       %{name}-tmpfiles.conf
+Source2:       %{name}-master.service
+Source3:       %{name}-slave.service
+Source4:       %{name}-layout.sh
 
 BuildRequires: java-devel
 BuildRequires: mvn(commons-io:commons-io)
-BuildRequires: mvn(de.javakaffee:kryo-serializers)
+#BuildRequires: mvn(de.javakaffee:kryo-serializers)
 BuildRequires: mvn(log4j:log4j)
 BuildRequires: mvn(org.apache.ant:ant)
 BuildRequires: mvn(org.apache.commons:commons-lang3)
@@ -65,21 +68,10 @@ This package contains javadoc for %{name}.
 find -name '*.class' -print -delete
 find -name '*.jar' -print -delete
 
-%patch0 -p1
-
-# Use hadoop2 as default profile
-#%pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop1' ]"
-#%pom_xpath_remove "pom:project/pom:profiles/pom:profile[pom:id = 'hadoop3' ]"
-
-# Fix hadoop deps aid
-#sed -i "s|<artifactId>hadoop-core|<artifactId>hadoop-common|" pom.xml
 sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" pom.xml
 
 # Remove unnecessary plugin
 %pom_remove_plugin :maven-assembly-plugin
-# 
-# Fix replacer plugin aId
-# %pom_xpath_set "pom:project/pom:build/pom:plugins/pom:plugin[pom:groupId = 'com.google.code.maven-replacer-plugin' ]/pom:artifactId" replacer
 
 # Fix unavailable jetty-jsp-2.1
 %pom_remove_dep org.eclipse.jetty:jetty-jsp
@@ -93,8 +85,6 @@ sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" p
 sed -i "s|org.mortbay.log.Log|org.eclipse.jetty.util.log.Log|" src/main/java/tachyon/MasterInfo.java
 sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.java
 
-#rm -f src/test/java/tachyon/client/TachyonFSTest.java
-
 # This is required to update to the latest thrift.
 ./bin/thrift-gen.sh
 
@@ -106,13 +96,50 @@ sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.j
 %install
 %mvn_install
 
+#######################
+mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
+install -m 0644 %{SOURCE1} %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
+
+#######################
+mkdir -p %{buildroot}%{_unitdir}
+install -m 0644 %{SOURCE2} %{SOURCE3} %{buildroot}%{_unitdir}/
+
+#######################
+mkdir -p %{buildroot}%{_libexecdir}/
+install -m 0755 %{SOURCE4} %{buildroot}%{_libexecdir}/
+
+#######################
+mkdir -p %{buildroot}%{_bindir}/
+install -m 755 bin/tachyo* %{buildroot}%{_bindir}/
+
 %files -f .mfiles
 %doc LICENSE README.md
-#%{_bindir}/clear-cache.sh
+%config(noreplace) %_sysconfdir/tmpfiles.d/%{name}.conf
+%{_bindir}/tachyon*
+%{_libexecdir}/tachyon*
+%config(noreplace) %_sysconfdir/tmpfiles.d/%{name}.conf
+%{_unitdir}/*
 
 %files javadoc -f .mfiles-javadoc
 %doc LICENSE
 
+############################################
+%pre
+getent group tachyon >/dev/null || groupadd -f -r tachyon
+if ! getent passwd tachyon >/dev/null ; then
+      useradd -r -g tachyon -d %{_sharedstatedir}/%{name} -s /sbin/nologin \
+              -c "%{name} daemon account" tachyon
+fi
+exit 0
+
+%post
+%systemd_post %{name}-slave.service %{name}-master.service
+
+%preun
+%systemd_preun %{name}-slave.service %{name}-master.service
+
+%postun
+%systemd_postun_with_restart %{name}-slave.service %{name}-master.service
 
 %changelog
 * Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1

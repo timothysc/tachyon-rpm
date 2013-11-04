@@ -1,0 +1,20 @@
+
+[Unit]
+Description=Cluster Framework In Memory File Sharing 
+After=syslog.target network.target
+Wants=network.target
+
+[Service]
+#EnvironmentFile=-/etc/
+ExecStart=/usr/bin/
+ExecStop=/usr/bin/tachyon-killall tachyon
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+LimitNOFILE=16384
+#ControlGroup=cpu:/tachyon
+
+[Install]
+WantedBy=multi-user.target
+
