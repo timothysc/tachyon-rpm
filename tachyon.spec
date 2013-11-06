@@ -1,21 +1,26 @@
-%global commit      ace4347470c74caeb6977a9b5decf7fb61422a4e
+%global commit      70e7a47c9736e38a7e258377549a090afccd7ca6
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global shortname   tachyon
 
-Name:          tachyon
+Name:          amplab-%{shortname}
+# Given the naming conflicts with other packages, and eventually this will 
+# switch to apache-tachyon should 
 Version:       0.4.0
-Release:       1.%{shortcommit}%{?dist}
+Release:       3.%{shortcommit}%{?dist}
 Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
 License:       BSD
 URL:           https://github.com/amplab/tachyon/wiki
-Source0:       https://github.com/timothysc/tachyon/archive/%{commit}/%{name}-%{version}-%{shortcommit}.tar.gz
-Source1:       %{name}-tmpfiles.conf
-Source2:       %{name}-master.service
-Source3:       %{name}-slave.service
-Source4:       %{name}-layout.sh
+Source0:       https://github.com/timothysc/tachyon/archive/%{commit}/%{shortname}-%{version}-%{shortcommit}.tar.gz
+Source1:       %{shortname}-tmpfiles.conf
+Source2:       %{shortname}-master.service
+Source3:       %{shortname}-slave.service
+Source4:       %{shortname}-layout.sh
+Source5:       %{shortname}-env.sh
+
+Patch0:        log4props.patch
 
 BuildRequires: java-devel
 BuildRequires: mvn(commons-io:commons-io)
-#BuildRequires: mvn(de.javakaffee:kryo-serializers)
 BuildRequires: mvn(log4j:log4j)
 BuildRequires: mvn(org.apache.ant:ant)
 BuildRequires: mvn(org.apache.commons:commons-lang3)
@@ -54,7 +59,7 @@ information and using memory aggressively.
 Tachyon caches working set files in memory, and
 enables different jobs/queries and frameworks to
 access cached files at memory speed. Thus, Tachyon
-avoids going to disk to load datasets that
+avoids going to disk to load data-sets that
 are frequently read.
 
 %package javadoc
@@ -64,9 +69,11 @@ Summary:       Javadoc for %{name}
 This package contains javadoc for %{name}.
 
 %prep
-%setup -q -n %{name}-%{commit}
+%setup -q -n tachyon-%{commit}
 find -name '*.class' -print -delete
 find -name '*.jar' -print -delete
+
+%patch0 -p1
 
 sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" pom.xml
 
@@ -90,15 +97,17 @@ sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.j
 
 %build
  
-%mvn_file org.tachyonproject:%{name} %{name}
+%mvn_file org.tachyonproject:%{shortname} %{shortname}
 %mvn_build
 
 %install
 %mvn_install
 
 #######################
+# install system integration files
+#######################
 mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
-install -m 0644 %{SOURCE1} %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
+install -m 0644 %{SOURCE1} %{buildroot}%{_sysconfdir}/tmpfiles.d/%{shortname}.conf
 
 #######################
 mkdir -p %{buildroot}%{_unitdir}
@@ -107,18 +116,34 @@ install -m 0644 %{SOURCE2} %{SOURCE3} %{buildroot}%{_unitdir}/
 #######################
 mkdir -p %{buildroot}%{_libexecdir}/
 install -m 0755 %{SOURCE4} %{buildroot}%{_libexecdir}/
+install -m 0755 libexec/* %{buildroot}%{_libexecdir}/
 
 #######################
 mkdir -p %{buildroot}%{_bindir}/
-install -m 755 bin/tachyo* %{buildroot}%{_bindir}/
+install -m 0755 bin/tachyon* %{buildroot}%{_bindir}/
+
+#######################
+mkdir -p %{buildroot}/%{_sysconfdir}/%{shortname}
+install -m 0644 conf/log4j.properties conf/slaves %{buildroot}/%{_sysconfdir}/%{shortname}
+install -m 0644 %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{shortname}
+
+#######################
+mkdir -p -m0755 %{buildroot}/%{_var}/log/%{shortname}
+mkdir -p -m0755 %{buildroot}%{_var}/lib/%{shortname}
 
 %files -f .mfiles
 %doc LICENSE README.md
-%config(noreplace) %_sysconfdir/tmpfiles.d/%{name}.conf
+%dir %_sysconfdir/%{shortname}
+%config(noreplace) %_sysconfdir/%{shortname}/log4j.properties
+%config(noreplace) %_sysconfdir/%{shortname}/slaves
+%config(noreplace) %_sysconfdir/%{shortname}/tachyon-env.sh
+%config(noreplace) %_sysconfdir/tmpfiles.d/%{shortname}.conf
 %{_bindir}/tachyon*
 %{_libexecdir}/tachyon*
-%config(noreplace) %_sysconfdir/tmpfiles.d/%{name}.conf
+%config(noreplace) %_sysconfdir/tmpfiles.d/%{shortname}.conf
 %{_unitdir}/*
+%dir %{_var}/log/%{shortname}
+%dir %{_var}/lib/%{shortname}
 
 %files javadoc -f .mfiles-javadoc
 %doc LICENSE
@@ -127,23 +152,29 @@ install -m 755 bin/tachyo* %{buildroot}%{_bindir}/
 %pre
 getent group tachyon >/dev/null || groupadd -f -r tachyon
 if ! getent passwd tachyon >/dev/null ; then
-      useradd -r -g tachyon -d %{_sharedstatedir}/%{name} -s /sbin/nologin \
-              -c "%{name} daemon account" tachyon
+      useradd -r -g tachyon -d %{_sharedstatedir}/%{shortname} -s /sbin/nologin \
+              -c "%{shortname} daemon account" tachyon
 fi
 exit 0
 
 %post
-%systemd_post %{name}-slave.service %{name}-master.service
+%systemd_post %{shortname}-slave.service %{shortname}-master.service
 
 %preun
-%systemd_preun %{name}-slave.service %{name}-master.service
+%systemd_preun %{shortname}-slave.service %{shortname}-master.service
 
 %postun
-%systemd_postun_with_restart %{name}-slave.service %{name}-master.service
+%systemd_postun_with_restart %{shortname}-slave.service %{shortname}-master.service
 
 %changelog
+* Wed Nov 6 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.70e7a47
+- Modifications from system testing.
+
+* Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2
+- System integration and testing.
+
 * Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1
-- Pre-release update to 0.4.0 with script modifications. 
+- Pre-release update to 0.4.0 with script modifications.
 
 * Thu Oct 10 2013 Timothy St. Clair <tstclair@redhat.com> 0.3.0-1
 - Update to the latest in preparation for release. 
