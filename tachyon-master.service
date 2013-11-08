@@ -1,18 +1,20 @@
 
 [Unit]
-Description=Cluster Framework In Memory File Sharing 
-After=syslog.target network.target
+Description=Cluster Framework In Memory File Sharing (master node)
+After=network.target
 Wants=network.target
 
 [Service]
-#EnvironmentFile=-/etc/
-ExecStart=/usr/bin/
-ExecStop=/usr/bin/tachyon-killall tachyon
-ExecReload=/bin/kill -HUP $MAINPID
-Restart=always
-RestartSec=5
-StandardOutput=syslog
+#EnvironmentFile=-/etc/sysconfig/tachyon-master
+Type=forking
+ExecStart=/usr/bin/tachyon-start.sh master
+ExecStop=/usr/bin/tachyon-killall.sh tachyon.Master
+User=tachyon
+Group=tachyon
 LimitNOFILE=16384
+Restart=always
+RestartSec=20
+#PIDFile=/var/run/tachyon/tachyon-master.pid
 #ControlGroup=cpu:/tachyon
 
 [Install]

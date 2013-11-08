@@ -1,4 +1,4 @@
-%global commit      70e7a47c9736e38a7e258377549a090afccd7ca6
+%global commit      9d66149f791f57103d3d78ac48e36343d4fa2b9c
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global shortname   tachyon
 
@@ -129,7 +129,7 @@ install -m 0644 %{SOURCE5} %{buildroot}/%{_sysconfdir}/%{shortname}
 
 #######################
 mkdir -p -m0755 %{buildroot}/%{_var}/log/%{shortname}
-mkdir -p -m0755 %{buildroot}%{_var}/lib/%{shortname}
+mkdir -p -m0755 %{buildroot}%{_var}/lib/%{shortname}/journal
 
 %files -f .mfiles
 %doc LICENSE README.md
@@ -142,8 +142,8 @@ mkdir -p -m0755 %{buildroot}%{_var}/lib/%{shortname}
 %{_libexecdir}/tachyon*
 %config(noreplace) %_sysconfdir/tmpfiles.d/%{shortname}.conf
 %{_unitdir}/*
-%dir %{_var}/log/%{shortname}
-%dir %{_var}/lib/%{shortname}
+%attr(0755,tachyon,tachyon) %dir %{_var}/log/%{shortname}
+%attr(0755,tachyon,tachyon) %dir %{_var}/lib/%{shortname}/journal
 
 %files javadoc -f .mfiles-javadoc
 %doc LICENSE
@@ -167,7 +167,7 @@ exit 0
 %systemd_postun_with_restart %{shortname}-slave.service %{shortname}-master.service
 
 %changelog
-* Wed Nov 6 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.70e7a47
+* Thu Nov 7 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.9d66149
 - Modifications from system testing.
 
 * Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2

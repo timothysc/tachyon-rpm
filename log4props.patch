@@ -16,7 +16,7 @@ index ee04ac3..700cc79 100644
  # Appender for Workers
  log4j.appender.WORKER_LOGGER=tachyon.Log4jFileAppender
 -log4j.appender.WORKER_LOGGER.File=${tachyon.home}/logs/worker.log
-+log4j.appender.WORKER_LOGGER.File=/var/log/tachyon/worker.log
++log4j.appender.WORKER_LOGGER.File=/var/log/tachyon/slave.log
  
  log4j.appender.WORKER_LOGGER.MaxFileSize=10
  log4j.appender.WORKER_LOGGER.MaxBackupIndex=100
