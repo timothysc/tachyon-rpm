@@ -27,6 +27,7 @@ BuildRequires: mvn(org.apache.commons:commons-lang3)
 
 BuildRequires: mvn(org.apache.hadoop:hadoop-common)
 BuildRequires: mvn(org.apache.hadoop:hadoop-mapreduce-client-core)
+BuildRequires: mvn(org.apache.hadoop:hadoop-hdfs)
 BuildRequires: mvn(org.apache.curator:curator-recipes)
 BuildRequires: mvn(org.apache.curator:curator-test)
 BuildRequires: mvn(org.apache.thrift:libthrift)
@@ -47,6 +48,7 @@ BuildRequires: maven-remote-resources-plugin
 BuildRequires: maven-site-plugin
 BuildRequires: replacer
 BuildRequires: thrift
+BuildRequires: systemd
 
 BuildArch:     noarch
 
@@ -76,6 +78,8 @@ find -name '*.jar' -print -delete
 %patch0 -p1
 
 sed -i "s|<artifactId>hadoop-client|<artifactId>hadoop-mapreduce-client-core|" pom.xml
+
+%pom_xpath_remove "pom:repositories"
 
 # Remove unnecessary plugin
 %pom_remove_plugin :maven-assembly-plugin
@@ -158,7 +162,7 @@ fi
 exit 0
 
 %post
-%systemd_post %{shortname}-slave.service %{shortname}-master.service
+%systemd_post %{shortname}-master.service %{shortname}-slave.service
 
 %preun
 %systemd_preun %{shortname}-slave.service %{shortname}-master.service
