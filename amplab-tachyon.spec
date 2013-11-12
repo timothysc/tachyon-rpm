@@ -6,7 +6,7 @@ Name:          amplab-%{shortname}
 # Given the naming conflicts with other packages, and eventually this will 
 # switch to apache-tachyon should 
 Version:       0.4.0
-Release:       3.%{shortcommit}%{?dist}
+Release:       3.SNAPSHOT.%{shortcommit}%{?dist}
 Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
 License:       BSD
 URL:           https://github.com/amplab/tachyon/wiki
@@ -17,7 +17,7 @@ Source3:       %{shortname}-slave.service
 Source4:       %{shortname}-layout.sh
 Source5:       %{shortname}-env.sh
 
-Patch0:        log4props.patch
+Patch0:        tachyon-0.4.0-SNAPSHOT-log4props.patch
 
 BuildRequires: java-devel
 BuildRequires: mvn(commons-io:commons-io)
@@ -171,13 +171,13 @@ exit 0
 %systemd_postun_with_restart %{shortname}-slave.service %{shortname}-master.service
 
 %changelog
-* Thu Nov 7 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.9d66149
+* Thu Nov 7 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.SNAPSHOT.9d66149
 - Modifications from system testing.
 
-* Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2
+* Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2.SNAPSHOT
 - System integration and testing.
 
-* Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1
+* Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1.SNAPSHOT
 - Pre-release update to 0.4.0 with script modifications.
 
 * Thu Oct 10 2013 Timothy St. Clair <tstclair@redhat.com> 0.3.0-1
