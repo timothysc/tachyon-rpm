@@ -174,10 +174,10 @@ exit 0
 * Thu Nov 7 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.SNAPSHOT.9d66149
 - Modifications from system testing.
 
-* Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2.SNAPSHOT
+* Mon Nov 4 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-2.SNAPSHOT.9d66149
 - System integration and testing.
 
-* Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1.SNAPSHOT
+* Mon Oct 28 2013 Timothy St. Clair <tstclair@redhat.com> 0.4.0-1.SNAPSHOT.9d66149
 - Pre-release update to 0.4.0 with script modifications.
 
 * Thu Oct 10 2013 Timothy St. Clair <tstclair@redhat.com> 0.3.0-1
