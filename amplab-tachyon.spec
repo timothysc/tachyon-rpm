@@ -1,4 +1,4 @@
-%global commit      9d66149f791f57103d3d78ac48e36343d4fa2b9c
+%global commit      515c2c84b3e402c723e46fcc9f2b885ca39a51b0
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global shortname   tachyon
 
@@ -6,11 +6,11 @@ Name:          amplab-%{shortname}
 # Given the naming conflicts with other packages, and eventually this will 
 # switch to apache-tachyon should 
 Version:       0.4.0
-Release:       3.SNAPSHOT.%{shortcommit}%{?dist}
+Release:       4.SNAPSHOT.%{shortcommit}%{?dist}
 Summary:       Reliable File Sharing at Memory Speed Across Cluster Frameworks
-License:       BSD
+License:       ASL 2.0
 URL:           https://github.com/amplab/tachyon/wiki
-Source0:       https://github.com/timothysc/tachyon/archive/%{commit}/%{shortname}-%{version}-%{shortcommit}.tar.gz
+Source0:       https://github.com/amplab/tachyon/archive/%{commit}/%{shortname}-%{version}-%{shortcommit}.tar.gz
 Source1:       %{shortname}-tmpfiles.conf
 Source2:       %{shortname}-master.service
 Source3:       %{shortname}-slave.service
@@ -97,7 +97,7 @@ sed -i "s|org.mortbay.log.Log|org.eclipse.jetty.util.log.Log|" src/main/java/tac
 sed -i "s|Log.info|Log.getRootLogger().info|" src/main/java/tachyon/MasterInfo.java
 
 # This is required to update to the latest thrift.
-./bin/thrift-gen.sh
+./bin/tachyon thriftGen
 
 %build
  
@@ -171,6 +171,9 @@ exit 0
 %systemd_postun_with_restart %{shortname}-slave.service %{shortname}-master.service
 
 %changelog
+* Fri Nov 15 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-4.SNAPSHOT.515c2c8
+- Patches accepted upstream, thus changing source url to be canonical
+
 * Thu Nov 7 2013 Timothy St. Clair<tstclair@redhat.com> 0.4.0-3.SNAPSHOT.9d66149
 - Modifications from system testing.
 
